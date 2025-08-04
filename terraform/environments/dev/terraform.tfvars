@@ -1,0 +1,6 @@
+region         = "us-east-1"
+instance_type  = "t3.micro"
+instance_name  = "dev-ec2"
+subnet_name    = "subnet"
+sg_id        = "sg-0153d37e10c6bf963"
+key_name       = "my-key"

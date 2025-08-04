@@ -1,0 +1,143 @@
+name: Terraform AWS Ec2 CI/CD
+
+on:
+  push:
+    branches:
+      - stage
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (dev or prod)"
+        required: true
+        default: "dev"
+      confirm_apply:
+        description: "Type 'yes' to apply resources"
+        required: true
+        default: "no"
+
+jobs:
+  plan:
+    name: Terraform Plan and Cost Estimate
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment ||'dev-plan'}}
+    env:
+      ENV: ${{ github.event.inputs.environment || 'dev' }}
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_BUCKET: ${{ secrets.TF_BUCKET }}
+      TF_KEY: ${{ secrets.TF_KEY }}
+      TF_REGION: ${{ secrets.TF_REGION }}
+      TF_DYNAMODB: ${{ secrets.TF_DYNAMODB }}
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ env.ENV }}
+    outputs:
+      tfplan-exists: ${{ steps.tfplan.outputs.plan_created }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        run: |
+         terraform init \
+         -backend-config="bucket=$TF_BUCKET" \
+         -backend-config="key=$TF_KEY" \
+         -backend-config="region=$TF_REGION" \
+         -backend-config="dynamodb_table=$TF_DYNAMODB" \
+         -backend-config="encrypt=true"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: tfplan
+        run: |
+          terraform plan -var-file="terraform.tfvars" -out=tfplan.binary
+          terraform show -json tfplan.binary > plan.json
+          echo "plan_created=true" >> $GITHUB_OUTPUT
+
+      - name: Upload Terraform Plan Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-files
+          path: |
+            terraform/environments/${{ env.ENV }}/tfplan.binary
+            terraform/environments/${{ env.ENV }}/plan.json
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2.1.0
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Run Infracost Breakdown with Usage
+        run: |
+          infracost breakdown \
+            --path=plan.json \
+            --format=table \
+            --out-file=infracost-report.txt
+
+      - name: Upload Infracost Report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: infracost-report
+          path: terraform/environments/${{ env.ENV }}/infracost-report.txt
+
+      - name: Show Infracost report
+        run: |
+          echo "INFO: Infracost cost breakdown report:"
+          cat infracost-report.txt
+
+  apply:
+    name: Terraform Apply with Approval
+    needs: plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_apply == 'yes'
+
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    env:
+      ENV: ${{ github.event.inputs.environment || 'dev' }}
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_BUCKET: ${{ secrets.TF_BUCKET }}
+      TF_KEY: ${{ secrets.TF_KEY }}
+      TF_REGION: ${{ secrets.TF_REGION }}
+      TF_DYNAMODB: ${{ secrets.TF_DYNAMODB }}
+
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ env.ENV }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Download Terraform plan files
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-files
+          path: terraform/environments/${{ github.event.inputs.environment }}
+
+      - name: Terraform Init
+        run: |
+         terraform init \
+         -backend-config="bucket=$TF_BUCKET" \
+         -backend-config="key=$TF_KEY" \
+         -backend-config="region=$TF_REGION" \
+         -backend-config="dynamodb_table=$TF_DYNAMODB" \
+         -backend-config="encrypt=true"
+
+      - name: Terraform Apply (waits for GitHub Environment approval)
+        run: terraform apply -auto-approve tfplan.binary
