@@ -1,0 +1,6 @@
+region         = "us-east-1"
+instance_type  = "t3.micro"
+instance_name  = "prod-ec2"
+subnet_name    = "subnet"
+sg_name        = "sg"
+key_name       = "my-key"
