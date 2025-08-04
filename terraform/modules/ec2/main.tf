@@ -26,12 +26,9 @@ data "aws_subnet" "selected" {
   }
 }
 
-# Get Security Group by Name Tag
+# Get Security Group by ID Tag
 data "aws_security_group" "selected" {
-  filter {
-    name   = "tag:Name"
-    values = [var.sg_name]
-  }
+  id = var.sg_id
 }
 
 # Get Key Pair
