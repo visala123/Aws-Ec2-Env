@@ -45,12 +45,13 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Terraform Init
-        run: terraform init \
-            -backend-config="bucket=$TF_BUCKET" \
-            -backend-config="key=$TF_KEY" \
-            -backend-config="region=$TF_REGION" \
-            -backend-config="dynamodb_table=$TF_DYNAMODB" \
-            -backend-config="encrypt=true"
+        run: |
+         terraform init \
+         -backend-config="bucket=$TF_BUCKET" \
+         -backend-config="key=$TF_KEY" \
+         -backend-config="region=$TF_REGION" \
+         -backend-config="dynamodb_table=$TF_DYNAMODB" \
+         -backend-config="encrypt=true"
 
       - name: Terraform Validate
         run: terraform validate
@@ -130,12 +131,13 @@ jobs:
           path: terraform/environments/${{ github.event.inputs.environment }}
 
       - name: Terraform Init
-        run: terraform init \
-            -backend-config="bucket=$TF_BUCKET" \
-            -backend-config="key=$TF_KEY" \
-            -backend-config="region=$TF_REGION" \
-            -backend-config="dynamodb_table=$TF_DYNAMODB" \
-            -backend-config="encrypt=true"
+        run: |
+         terraform init \
+         -backend-config="bucket=$TF_BUCKET" \
+         -backend-config="key=$TF_KEY" \
+         -backend-config="region=$TF_REGION" \
+         -backend-config="dynamodb_table=$TF_DYNAMODB" \
+         -backend-config="encrypt=true"
 
       - name: Terraform Apply (waits for GitHub Environment approval)
         run: terraform apply -auto-approve tfplan.binary
