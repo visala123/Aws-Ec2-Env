@@ -244,15 +244,10 @@ table_name
 ```terminal
 
 terraform init `
-
   -backend-config="bucket=bucket name" `
-
   -backend-config="key=bucket key" `
-
   -backend-config="region=us-east-1" `
-
   -backend-config="dynamodb_table=name of dynamodb table" `
-
   -backend-config="encrypt=true"
 
 terraform destroy 
