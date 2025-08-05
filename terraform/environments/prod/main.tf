@@ -42,6 +42,7 @@ resource "aws_instance" "this" {
   subnet_id                   = data.aws_subnet.selected.id
   vpc_security_group_ids      = [data.aws_security_group.selected.id]
   key_name                    = data.aws_key_pair.selected.key_name
+  associate_public_ip_address = var.associate_public_ip
 
   tags = {
     Name = var.instance_name
