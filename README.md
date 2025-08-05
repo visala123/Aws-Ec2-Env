@@ -143,17 +143,31 @@ terraform/
 .github/
   workflows/
     deploy.yml
-```
+  ```
+
+## Update the terraform.tfvars 
+update the below values according to your configuration.
+
+subnet_name    = " "
+
+sg_id          = " "
+
+key_name       = " " 
 
 ##  Required Secrets in GitHub
 
 In your GitHub repo, go to **Settings → Environments → prod and dev, dev-plan and prod-plan->add Environment secrets** and add:
 
 AWS_ACCESS_KEY_ID
+
 AWS_SECRET_ACCESS_KEY
+
 TF_BUCKET ---s3 bucket name
+
 TF_KEY    ---any name can give example terraform.tfstate.dev.EC2. for each environment you have to give different name.
+
 TF_REGION --- s3 bucket region ex us-east-1
+
 TF_DYNAMODB ---dynamodb table name.
 
 INFRACOST_API_KEY --- key can get it from infracost.io
@@ -228,12 +242,19 @@ Once approved, resources are deployed
 table_name
 ##  Cleanup
 ```terminal
+
 terraform init `
+
   -backend-config="bucket=bucket name" `
+
   -backend-config="key=bucket key" `
+
   -backend-config="region=us-east-1" `
+
   -backend-config="dynamodb_table=name of dynamodb table" `
+
   -backend-config="encrypt=true"
+
 terraform destroy 
 ```
 
