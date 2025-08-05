@@ -147,8 +147,11 @@ terraform/
 
 ## Update the terraform.tfvars 
 update the below values according to your configuration.
+
 subnet_name    = " "
+
 sg_id          = " "
+
 key_name       = " " 
 
 ##  Required Secrets in GitHub
