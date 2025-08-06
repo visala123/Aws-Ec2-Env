@@ -239,7 +239,13 @@ Waits for approval (based on environment reviewers)
 Once approved, resources are deployed
 
 # Outputs
-table_name
+
+Instance_id
+
+Public_ip
+
+Private_ip
+
 ##  Cleanup
 ```terminal
 
