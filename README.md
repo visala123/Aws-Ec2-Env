@@ -136,7 +136,7 @@ terraform/
       variables.tf
       terraform.tfvars
   modules/
-    dynamodb/
+    ec2/
       main.tf
       outputs.tf
       variables.tf
